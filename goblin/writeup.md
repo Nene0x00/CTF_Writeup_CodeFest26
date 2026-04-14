@@ -40,22 +40,25 @@ call srand@plt
 Because the seed is constant (0x1337), the sequence produced by rand() is deterministic.
 The validation loop works as follows:
 1.	Generate a pseudo-random key with rand()
-2.	XOR the user input with this key
-3.	Compare the result with an encrypted byte stored in the binary
+2.	XOR the user input with this key.
+3.	Compare the result with an encrypted byte stored in the binary.
 The critical comparison instruction occurs at:
-cmp %eax, %edx
-This is where each character is verified.
+**cmp %eax, %edx**. This is where each character is verified.
 ________________________________________
 *Phase 3 — Runtime Exploitation*
 
 Instead of statically reversing the algorithm, I used GDB to instrument execution and recover the flag dynamically.
-1. Neutralizing the Failure Branch
+1. **Neutralizing the Failure Branch**
+   
 The program exits immediately on mismatch. I patched the conditional jump after the comparison by overwriting it with NOP instructions:
 set {unsigned char}0x... = 0x90
 set {unsigned char}0x... = 0x90
 This prevents early termination.
-2. Automated XOR Reversal
+
+2. **Automated XOR Reversal**
+
 I placed a breakpoint at the comparison instruction and attached a GDB script:
+
 break *0x...
 commands
   silent
@@ -64,6 +67,7 @@ commands
   set $edx = $eax
   continue
 end
+
 This script:
 •	extracts the XOR key from the stack
 •	reverses the XOR to reveal the original character
